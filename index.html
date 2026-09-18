@@ -1,0 +1,587 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#191521">
+<title>Excel snatcher</title>
+<style>
+  :root{ /* dark lavender = default */
+    --bg:#191521; --panel:#241d2e; --panel2:#1c1726; --ink:#efecf6; --muted:#a79eb8;
+    --border:#37304a; --border-dark:#4c4363; --code-bg:#1b1626;
+    --p:#cdc6dd; --codeink:#c3aee8; --rowhi:rgba(255,255,255,.035);
+    --accent:#a78bda;
+    --l1:#d3c2f7; --l2:#b3a0ea; --l3:#c89ae8; --l4:#e290cd; --l5:#c987ae;
+  }
+  [data-theme="light"]{ /* light lavender */
+    --bg:#f4f1f8; --panel:#ffffff; --panel2:#efebf6; --ink:#2a2438; --muted:#7d7291;
+    --border:#e3ddee; --border-dark:#cfc6e0; --code-bg:#ece7f4;
+    --p:#4c445e; --codeink:#6a4f9e; --rowhi:rgba(90,70,140,.045);
+    --accent:#7b64b8;
+    --l1:#8466c7; --l2:#684db0; --l3:#9c58bf; --l4:#c152a0; --l5:#a94d73;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:16px}
+  body{font-family:"Candara","Segoe UI","Malgun Gothic","Noto Sans",Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;font-size:15px}
+  ::selection{background:var(--accent);color:#fff}
+  .layout{display:flex;max-width:1240px;margin:0 auto;min-height:100vh}
+  nav{position:sticky;top:0;height:100vh;overflow-y:auto;width:220px;flex-shrink:0;background:var(--panel2);border-right:1px solid var(--border);padding:28px 16px}
+  nav::-webkit-scrollbar{width:5px}nav::-webkit-scrollbar-thumb{background:var(--border-dark);border-radius:4px}
+  main{flex:1;padding:40px 48px;min-width:0;max-width:920px}
+  .brand{margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--border)}
+  .brand h2{font-family:"Palatino Linotype",Palatino,"Book Antiqua","Noto Serif",serif;font-size:17px;letter-spacing:.3px}
+  .brand span{font-size:10px;color:var(--muted);display:block;font-weight:400;letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:6px 11px;font-size:13px;border-left:2px solid transparent;transition:.15s;margin-left:2px}
+  nav a:hover{color:var(--ink)}
+  nav a.active{color:var(--ink);font-weight:600}
+  nav a.c1.active{border-left-color:var(--l1)}nav a.c2.active{border-left-color:var(--l2)}nav a.c3.active{border-left-color:var(--l3)}
+  nav a.c4.active{border-left-color:var(--l4)}nav a.c5.active{border-left-color:var(--l5)}
+  nav a.c0.active{border-left-color:var(--ink)}
+  h1{font-family:"Palatino Linotype",Palatino,"Book Antiqua","Noto Serif",serif;font-size:32px;line-height:1.2;font-weight:400;letter-spacing:-.3px}
+  h2{font-family:"Palatino Linotype",Palatino,"Book Antiqua","Noto Serif",serif;font-size:24px;margin-bottom:6px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-weight:400}
+  .lvl-sub{color:var(--muted);font-size:14px;margin-bottom:24px}
+  p{margin-bottom:10px;color:var(--p)}
+  section{margin-bottom:56px}
+  code{background:var(--code-bg);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:"Cascadia Code",Consolas,"Courier New",monospace;font-size:12.5px;color:var(--codeink);white-space:nowrap}
+  kbd{background:var(--panel);border:1px solid var(--border-dark);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-family:"Cascadia Code",Consolas,"Courier New",monospace;font-size:11.5px;color:var(--codeink);white-space:nowrap}
+  /* ---------- Language switch ---------- */
+  .topctrls{position:fixed;top:18px;right:22px;display:flex;gap:10px;z-index:30}
+  .langswitch{display:flex;border:1px solid var(--border-dark);border-radius:10px;overflow:hidden;background:var(--panel);box-shadow:0 2px 8px rgba(60,45,100,.18)}
+  .langswitch button{border:none;background:transparent;padding:6px 16px;font-size:12.5px;letter-spacing:1px;color:var(--muted);cursor:pointer;transition:.15s;font-family:inherit}
+  .langswitch button:first-child{border-right:1px solid var(--border-dark)}
+  .langswitch button.on{background:var(--accent);color:#fff}
+  .langswitch button:not(.on):hover{color:var(--ink)}
+  /* ---------- Overview map ---------- */
+  .map{display:flex;align-items:stretch;flex-wrap:wrap;margin:22px 0 8px}
+  .map .node{flex:1;min-width:145px;padding:12px 14px;background:var(--panel);border:1px solid var(--border);border-left:3px solid;border-radius:6px;position:relative;margin:0 26px 14px 0;text-decoration:none;color:var(--ink);transition:.15s}
+  .map .node:hover{border-color:var(--border-dark)}
+  .map .node b{font-size:14px;font-weight:600;display:block}
+  .map .node small{display:block;font-weight:400;font-size:11.5px;color:var(--muted)}
+  .map .node::after{content:"→";position:absolute;right:-23px;top:50%;transform:translateY(-50%);color:var(--border-dark);font-size:15px}
+  .map .node:last-child::after{display:none}
+  .map .n1{border-left-color:var(--l1)}.map .n2{border-left-color:var(--l2)}.map .n3{border-left-color:var(--l3)}
+  .map .n4{border-left-color:var(--l4)}.map .n5{border-left-color:var(--l5)}
+  /* ---------- Badges ---------- */
+  .badge{font-size:10px;font-weight:600;padding:3px 10px;border-radius:6px;letter-spacing:1.4px;border:1px solid;text-transform:uppercase}
+  .b1{color:var(--l1);border-color:var(--l1)}.b2{color:var(--l2);border-color:var(--l2)}
+  .b3{color:var(--l3);border-color:var(--l3)}.b4{color:var(--l4);border-color:var(--l4)}
+  .b5{color:var(--l5);border-color:var(--l5)}
+  /* ---------- Road (timeline) ---------- */
+  .road{position:relative;margin:24px 0 10px;padding-left:38px;list-style:none}
+  .road::before{content:"";position:absolute;left:11px;top:8px;bottom:8px;width:1px;background:var(--border-dark)}
+  .stop{position:relative;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:13px 18px;margin-bottom:12px;transition:border-color .15s}
+  .stop:hover{border-color:var(--ac)}
+  .stop::before{content:attr(data-n);position:absolute;left:-38px;top:14px;width:24px;height:24px;border-radius:50%;background:var(--panel);border:1.5px solid var(--ac);color:var(--ac);font-weight:600;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:1}
+  .r1{--ac:var(--l1)}.r2{--ac:var(--l2)}.r3{--ac:var(--l3)}.r4{--ac:var(--l4)}.r5{--ac:var(--l5)}
+  .stop h4{font-size:15px;margin-bottom:3px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .stop p{font-size:13.5px;margin-bottom:6px;color:var(--muted)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chips code{cursor:pointer;transition:.15s}
+  .chips code:hover{border-color:var(--codeink);color:var(--ink)}
+  .chips code.copied{color:var(--l1)}
+  .formula{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--border);border-left:2px solid var(--ac,var(--codeink));border-radius:6px;padding:7px 13px;margin:7px 0;font-family:"Cascadia Code",Consolas,"Courier New",monospace;font-size:13px;color:var(--codeink);overflow-x:auto}
+  .formula .fx{color:var(--muted);font-weight:600;font-size:10.5px;letter-spacing:1px}
+  .formula button{margin-left:auto;flex-shrink:0;background:var(--panel);border:1px solid var(--border-dark);color:var(--muted);border-radius:5px;padding:2px 10px;font-size:11px;cursor:pointer;letter-spacing:.5px}
+  .formula button:hover{color:var(--ink);border-color:var(--ink)}
+  /* Tables */
+  .tbl-wrap{overflow-x:auto;margin:8px 0 14px;border:1px solid var(--border);border-radius:6px}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th{background:var(--panel2);color:var(--ink);text-align:left;padding:7px 12px;font-size:11.5px;letter-spacing:.8px;text-transform:uppercase;font-weight:600}
+  td{padding:6px 12px;border-top:1px solid var(--border);color:var(--p);vertical-align:top}
+  tr:nth-child(even) td{background:var(--rowhi)}
+  td code{font-size:11.5px}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .mini-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:15px 18px;margin-bottom:12px}
+  .mini-card h4{font-size:14px;margin-bottom:6px;font-weight:600}
+  .mini-card p,.mini-card li{font-size:13.5px;color:var(--muted)}
+  .mini-card p b{color:var(--ink)}
+  ul{margin:0 0 8px 18px;color:var(--p)}li{margin-bottom:3px}
+  .goal{background:var(--panel);border:1px dashed var(--ac2,var(--l5));border-radius:8px;padding:13px 18px;margin-top:14px;font-size:13.5px;color:var(--p)}
+  .goal b{color:var(--ac2,var(--l5));letter-spacing:1px}
+  .g1{--ac2:var(--l1)}.g2{--ac2:var(--l2)}.g3{--ac2:var(--l3)}.g4{--ac2:var(--l4)}.g5{--ac2:var(--l5)}
+  /* Progress */
+  .progress-item{display:flex;gap:10px;align-items:flex-start;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:9px 14px;margin-bottom:7px;cursor:pointer;font-size:13.5px;color:var(--p);transition:.15s}
+  .progress-item:hover{border-color:var(--border-dark)}
+  .progress-item input{margin-top:3px;accent-color:var(--ink);width:15px;height:15px;cursor:pointer}
+  .progress-item.done span{text-decoration:line-through;color:var(--muted)}
+  #pbar .track{height:6px;background:var(--code-bg);border:1px solid var(--border);border-radius:4px;overflow:hidden;margin:16px 0 6px}
+  #pbar .fill{height:100%;background:var(--ink);width:0%;transition:width .4s}
+  #pbar small{color:var(--muted);font-size:12px}
+  #toTop{position:fixed;bottom:22px;right:22px;background:var(--panel);color:var(--ink);border:1px solid var(--border-dark);width:40px;height:40px;border-radius:50%;font-size:17px;cursor:pointer;opacity:0;pointer-events:none;transition:.25s;z-index:10}
+  #toTop.show{opacity:1;pointer-events:auto}
+  footer{color:var(--muted);font-size:12px;text-align:center;padding:26px 0;border-top:1px solid var(--border);letter-spacing:.5px}
+  #mobilenav{display:none;position:sticky;top:0;z-index:20;background:var(--panel2);border-bottom:1px solid var(--border);padding:10px 14px}
+  #mobilenav select{width:100%;background:var(--panel);color:var(--ink);border:1px solid var(--border-dark);border-radius:6px;padding:9px;font-size:14px}
+  @media(max-width:900px){
+    nav{display:none}main{padding:22px 14px}.two-col{grid-template-columns:1fr}#mobilenav{display:block}.map .node::after{display:none}
+    body{font-size:14px;-webkit-tap-highlight-color:transparent}
+    h1{font-size:26px} h2{font-size:20px}
+    section{margin-bottom:42px}
+    .road{padding-left:30px;margin-left:2px}
+    .road::before{left:10px}
+    .stop::before{left:-30px;width:22px;height:22px;font-size:11px}
+    .stop{padding:11px 13px}
+    .formula{font-size:12px;padding:7px 10px;flex-wrap:wrap}
+    .formula button{margin-left:0}
+    .chips code{white-space:normal;word-break:break-word;padding:3px 8px}
+    .map .node{flex:1 1 100%;margin-right:0}
+    .langswitch button{padding:6px 12px;font-size:11.5px}
+    .topctrls{top:auto;bottom:16px;left:12px;right:auto}
+    #toTop{bottom:16px;right:12px}
+    .progress-item{font-size:13px;padding:9px 12px}
+    td,th{padding:6px 9px}
+  }
+  @media(max-width:480px){
+    main{padding:18px 12px}
+    h1{font-size:23px}
+  }
+  @media print{
+    nav,#toTop,#mobilenav,.formula button,.topctrls{display:none!important}
+    :root{--bg:#fff;--panel:#fff;--panel2:#f4f1f8;--ink:#111;--muted:#555;--p:#222;
+      --border:#e3ddee;--border-dark:#cfc6e0;--code-bg:#ece7f4;--codeink:#6a4f9e;--rowhi:#f7f5fb}
+    body{background:#fff}.stop,.mini-card{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<div class="topctrls">
+  <div class="langswitch" role="group" aria-label="Language">
+    <button id="btnEn" class="on" onclick="setLang('en')">EN</button>
+    <button id="btnKo" onclick="setLang('ko')">한국어</button>
+  </div>
+  <div class="langswitch" role="group" aria-label="Theme">
+    <button id="btnDark" class="on" onclick="setTheme('dark')">Dark</button>
+    <button id="btnLight" onclick="setTheme('light')">Light</button>
+  </div>
+</div>
+
+<div id="mobilenav">
+  <select id="navSelect" onchange="if(this.value)document.getElementById(this.value).scrollIntoView()">
+    <option value="">Jump to section…</option>
+  </select>
+</div>
+
+<div class="layout">
+  <nav>
+    <div class="brand">
+      <h2>Excel Snatcher</h2>
+    </div>
+    <a class="c0" href="#overview">Overview</a>
+    <a class="c1" href="#l1">Level 1 — Beginner</a>
+    <a class="c2" href="#l2">Level 2 — Foundational</a>
+    <a class="c3" href="#l3">Level 3 — Intermediate</a>
+    <a class="c4" href="#l4">Level 4 — Advanced</a>
+    <a class="c5" href="#l5">Level 5 — Expert</a>
+    <a class="c0" href="#cheatsheet">Cheat Sheets</a>
+    <a class="c0" href="#capstone">Capstones</a>
+    <a class="c0" href="#progress">Progress</a>
+  </nav>
+
+  <main>
+    <!-- ===== OVERVIEW ===== -->
+    <section id="overview">
+      <h1>excel learning snatcher</h1>
+      <p style="color:var(--muted);margin-top:8px" data-ko='길을 따라 한 단계씩.'>Follow the roads.</p>
+      <div class="map">
+        <a class="node n1" href="#l1"><b>1 · Beginner</b><small>Grid, formulas, format</small></a>
+        <a class="node n2" href="#l2"><b>2 · Foundational</b><small>$ refs, IF, filters, charts</small></a>
+        <a class="node n3" href="#l3"><b>3 · Intermediate</b><small>Lookups, tables, pivots</small></a>
+        <a class="node n4" href="#l4"><b>4 · Advanced</b><small>XLOOKUP, arrays, Power Query</small></a>
+        <a class="node n5" href="#l5"><b>5 · Expert</b><small>VBA, models, dashboards</small></a>
+      </div>
+      <div class="mini-card" data-ko='<b>기본 규칙:</b> 모든 수식은 = 로 시작 · 셀 주소는 B4 (열+행) · 범위는 A1:C10 · F2로 편집, Ctrl+Z로 실행 취소, F1로 도움말. 다음 단계로 넘어가기 전에 각 로드의 GOAL을 완료하세요.'>
+        <b>Ground rules:</b> every formula starts with <code>=</code> · cells are <code>B4</code> (column + row) · ranges are <code>A1:C10</code> · <kbd>F2</kbd> edits, <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes, <kbd>F1</kbd> opens help. Finish each road's <b>GOAL</b> before moving on.
+      </div>
+    </section>
+
+    <!-- ===== LEVEL 1 ===== -->
+    <section id="l1">
+      <h2>Level 1 — Beginner <span class="badge b1">The Grid</span></h2>
+      <p class="lvl-sub" data-ko='기초 다지기.'>Learn the basics.</p>
+      <ol class="road r1">
+        <li class="stop" data-n="1">
+          <h4>Interface</h4>
+          <p data-ko='리본 탭(Home/Insert/Data), 이름 상자, 수식 입력줄, 시트 탭, 상태 표시줄. 숫자를 선택하면 아래 상태 표시줄에 합계가 즉시 표시됩니다.'>Ribbon tabs (Home/Insert/Data), Name Box, Formula Bar, sheet tabs, and the status bar — select some numbers and it shows the Sum instantly.</p>
+        </li>
+        <li class="stop" data-n="2">
+          <h4>Editing</h4>
+          <p data-ko='숫자는 오른쪽, 텍스트는 왼쪽 정렬. Enter는 아래 · Tab은 오른쪽 이동 · F2 편집 · Delete 내용 지우기 · Alt+Enter 셀 안 줄바꿈.'>Numbers align right, text left. <kbd>Enter</kbd> moves down · <kbd>Tab</kbd> right · <kbd>F2</kbd> edits · <kbd>Delete</kbd> clears · <kbd>Alt</kbd>+<kbd>Enter</kbd> adds a line inside a cell.</p>
+        </li>
+        <li class="stop" data-n="3">
+          <h4>Navigation</h4>
+          <p data-ko='Ctrl+→ 데이터 끝으로 이동 · Ctrl+Shift+→ 끝까지 선택 · Ctrl+A 전체 선택 · Ctrl+Home 은 A1로.'><kbd>Ctrl</kbd>+<kbd>→</kbd> jumps to the edge of data · <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>→</kbd> selects to it · <kbd>Ctrl</kbd>+<kbd>A</kbd> selects all · <kbd>Ctrl</kbd>+<kbd>Home</kbd> goes to A1.</p>
+        </li>
+        <li class="stop" data-n="4">
+          <h4>Formatting</h4>
+          <p data-ko='굵게, 채우기 색, 테두리, 열 너비(경계를 더블클릭하면 자동 맞춤). Ctrl+1로 숫자 서식: %, 통화, 날짜. 서식은 실제 값을 바꾸지 않습니다.'>Bold, fill colors, borders, column widths (double-click the border to autofit). Number formats via <kbd>Ctrl</kbd>+<kbd>1</kbd>: %, currency, dates. Formatting never changes the value.</p>
+        </li>
+        <li class="stop" data-n="5">
+          <h4>Formulas</h4>
+          <p data-ko='= 를 입력한 뒤 셀을 클릭하세요. 숫자를 직접 적지 말고 셀 참조를 사용하면 결과가 자동으로 업데이트됩니다.'>Type <code>=</code>, then click cells. Prefer references over typed numbers — results update automatically.</p>
+          <div class="formula"><span class="fx">fx</span> <span>=B2*C2&nbsp;&nbsp;&nbsp;' price × qty</span><button>copy</button></div>
+        </li>
+        <li class="stop" data-n="6">
+          <h4>Functions</h4>
+          <p data-ko='Alt+=는 자동 합계(AutoSum)입니다. 칩을 클릭하면 복사됩니다:'>Plus <kbd>Alt</kbd>+<kbd>=</kbd> = AutoSum. Click a chip to copy:</p>
+          <div class="chips"><code>=SUM(B2:B10)</code><code>=AVERAGE(B2:B10)</code><code>=COUNT(B2:B10)</code><code>=COUNTA(A2:A10)</code><code>=MAX(B2:B10)</code><code>=MIN(B2:B10)</code></div>
+        </li>
+        <li class="stop" data-n="7">
+          <h4>AutoFill</h4>
+          <p data-ko='모서리의 작은 사각형(채우기 핸들)을 아래로 드래그하면 복사됩니다. 패턴도 이어줍니다: 1,2 → 3,4… · 1월 → 2월… · =B2*C2 → =B3*C3…'>Drag the corner square to copy down. It continues patterns: 1,2 → 3,4… · Jan → Feb… · <code>=B2*C2</code> → <code>=B3*C3</code>…</p>
+        </li>
+      </ol>
+      <div class="goal g1" data-ko='<b>GOAL</b> — 제품 5개, 단가 × 수량 열, 수식 드래그, AutoSum 합계. 10분이면 충분합니다.'><b>GOAL</b> — 5 products, price × qty column, dragged formulas, AutoSum total. Ten minutes, tops.</div>
+    </section>
+
+    <!-- ===== LEVEL 2 ===== -->
+    <section id="l2">
+      <h2>Level 2 — Foundational <span class="badge b2">Daily Tools</span></h2>
+      <p class="lvl-sub" data-ko='매일 쓰는 기능.'>Everyday essentials.</p>
+      <ol class="road r2">
+        <li class="stop" data-n="1">
+          <h4>References <span class="badge b2">Most Important</span></h4>
+          <p data-ko='수식을 드래그할 때 움직이면 안 되는 셀을 고정합니다. F4를 눌러 순환: A1 → $A$1 → A$1 → $A1.'>Lock cells that must stay put when a formula is dragged. Press <kbd>F4</kbd> to cycle <code>A1 → $A$1 → A$1 → $A1</code>.</p>
+          <div class="formula"><span class="fx">fx</span> <span>=B2*$H$1&nbsp;&nbsp;&nbsp;' B2 moves down; tax rate H1 stays</span><button>copy</button></div>
+        </li>
+        <li class="stop" data-n="2">
+          <h4>Sorting</h4>
+          <p data-ko='Ctrl+Shift+L로 필터 버튼을 켭니다. 데이터 → 정렬(다중 조건 가능). 머리글 드롭다운에서 값, 색, “평균 이상” 같은 조건으로 필터링합니다.'>Use <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> for filter buttons. Data → Sort (multi-level). Header dropdowns filter by value, color, or conditions like “Above Average”.</p>
+        </li>
+        <li class="stop" data-n="3">
+          <h4>Freezing</h4>
+          <p data-ko='보기 → 맨 위 행 고정. B2를 먼저 선택한 뒤 고정하면 1행과 A열이 함께 고정됩니다.'>View → Freeze Top Row. Select <b>B2</b> first to lock row 1 <i>and</i> column A together.</p>
+        </li>
+        <li class="stop" data-n="4">
+          <h4>Conditions</h4>
+          <p data-ko='IF는 조건 판단, *IF(S) 계열은 조건부 계산입니다:'>IF for logic; the *IF(S) family for conditional math:</p>
+          <div class="formula"><span class="fx">fx</span> <span>=IF(B2&gt;=60,&quot;Pass&quot;,&quot;Fail&quot;)</span><button>copy</button></div>
+          <div class="chips"><code>=SUMIF(A:A,"West",B:B)</code><code>=COUNTIF(C:C,"&gt;=1000")</code><code>=SUMIFS(C:C,A:A,"West",B:B,"&gt;500")</code></div>
+        </li>
+        <li class="stop" data-n="5">
+          <h4>Text</h4>
+          <div class="chips"><code>=LEFT(A2,3)</code><code>=RIGHT(A2,4)</code><code>=LEN(A2)</code><code>=TRIM(A2)</code><code>=PROPER(A2)</code><code>=A2&amp;" "&amp;B2</code><code>=TODAY()</code><code>=TEXT(A2,"mmm yyyy")</code><code>=DATEDIF(A2,B2,"d")</code><code>=EOMONTH(A2,0)</code></div>
+          <p style="margin-top:6px" data-ko='날짜는 사실 숫자입니다: =A2+7 은 다음 주, =B2-A2 는 두 날짜 사이의 일수입니다.'>Dates are numbers underneath: <code>=A2+7</code> gives next week, <code>=B2-A2</code> gives days between.</p>
+        </li>
+        <li class="stop" data-n="6">
+          <h4>Highlighting</h4>
+          <p data-ko='홈 → 조건부 서식: 강조 규칙, 데이터 막대, 색조. 수식 규칙 =$B2=&quot;Overdue&quot; 를 쓰면 행 전체가 강조됩니다.'>Home → Conditional Formatting: highlight rules, data bars, color scales. A formula rule like <code>=$B2="Overdue"</code> highlights entire rows.</p>
+        </li>
+        <li class="stop" data-n="7">
+          <h4>Charts</h4>
+          <p data-ko='머리글을 포함해 데이터를 선택한 뒤 Alt+F1을 누릅니다. 세로 막대 = 비교, 꺾은선 = 추세, 원형 = 적은 항목, 분산형 = 상관관계. 차트의 + 버튼으로 제목과 레이블을 추가합니다.'>Select data including headers → <kbd>Alt</kbd>+<kbd>F1</kbd>. Column = compare, line = trend, pie = few slices, scatter = correlation. Use the chart's <b>+</b> button for titles and labels.</p>
+        </li>
+        <li class="stop" data-n="8">
+          <h4>Dropdowns</h4>
+          <p data-ko='데이터 → 데이터 유효성 검사 → 목록: Active,On Hold,Closed. 입력 메시지와 오류 경고도 추가할 수 있습니다.'>Data → Data Validation → List, e.g. <code>Active,On Hold,Closed</code>. Add input messages and error alerts too.</p>
+        </li>
+      </ol>
+      <div class="goal g2" data-ko='<b>GOAL</b> — 개인 예산표: 월별 열, 수입 대비 % 열($ 사용!), 데이터 막대, 차트 1개, 머리글 행 고정.'><b>GOAL</b> — a personal budget: months across the top, a % of income column (use <code>$</code>!), data bars, one chart, frozen header.</div>
+    </section>
+
+    <!-- ===== LEVEL 3 ===== -->
+    <section id="l3">
+      <h2>Level 3 — Intermediate <span class="badge b3">Power User</span></h2>
+      <p class="lvl-sub" data-ko='데이터 다루기.'>Work with data.</p>
+      <ol class="road r3">
+        <li class="stop" data-n="1">
+          <h4>VLOOKUP</h4>
+          <p data-ko='첫 열에서 값을 찾아 지정한 열의 값을 반환합니다. 거의 항상 FALSE(정확히 일치)를 사용합니다.'>Finds a value down the first column and returns from column <b>n</b>. Almost always use <code>FALSE</code> (exact match).</p>
+          <div class="formula"><span class="fx">fx</span> <span>=VLOOKUP(A2, Products!$A$2:$C$100, 3, FALSE)</span><button>copy</button></div>
+        </li>
+        <li class="stop" data-n="2">
+          <h4>INDEX+MATCH</h4>
+          <p data-ko='유연한 고전 조합 — 어느 방향으로든 조회할 수 있고, 중간에 열이 삽입돼도 깨지지 않습니다:'>The flexible classic — looks any direction and survives inserted columns:</p>
+          <div class="formula"><span class="fx">fx</span> <span>=INDEX(C2:C100, MATCH(A2, A2:A100, 0))</span><button>copy</button></div>
+        </li>
+        <li class="stop" data-n="3">
+          <h4>IFERROR</h4>
+          <p data-ko='조회가 실패할 때 #N/A 대신 원하는 문구를 보여줍니다:'>Show your own message instead of #N/A when a lookup fails:</p>
+          <div class="formula"><span class="fx">fx</span> <span>=IFERROR(VLOOKUP(A2,$H$2:$J$50,2,FALSE), &quot;Not found&quot;)</span><button>copy</button></div>
+        </li>
+        <li class="stop" data-n="4">
+          <h4>Tables <span class="badge b3">Superpower</span></h4>
+          <p data-ko='Ctrl+T로 표로 변환: 자동 필터, 자동 확장, 수식 하나가 열 전체에 적용, 읽기 쉬운 구조적 참조:'><kbd>Ctrl</kbd>+<kbd>T</kbd> turns data into a Table: auto-filters, auto-expanding ranges, one formula fills the whole column, and readable references:</p>
+          <div class="formula"><span class="fx">fx</span> <span>=SUMIFS(Sales[Amount], Sales[Region], &quot;West&quot;)</span><button>copy</button></div>
+        </li>
+        <li class="stop" data-n="5">
+          <h4>Names</h4>
+          <p data-ko='셀을 선택하고 이름 상자에 TaxRate 를 입력하면 =B2*TaxRate 처럼 읽기 쉬운 수식이 됩니다. 수식 → 이름 관리자에서 관리합니다.'>Select a cell, type <code>TaxRate</code> in the Name Box, then write <code>=B2*TaxRate</code>. Manage them under Formulas → Name Manager.</p>
+        </li>
+        <li class="stop" data-n="6">
+          <h4>PivotTables <span class="badge b3">Core Skill</span></h4>
+          <p data-ko='삽입 → 피벗테이블. Region을 행으로, Amount를 값으로, Month를 열로 드래그합니다. 이후: 값 필드 설정 → 전체 합계 비율 · 날짜 우클릭 → 그룹 · 슬라이서 추가 · Alt+F5로 새로 고침.'>Insert → PivotTable. Drag Region → Rows, Amount → Values, Month → Columns. Then: Value Field Settings → % of Grand Total · right-click dates → Group · add a Slicer · refresh with <kbd>Alt</kbd>+<kbd>F5</kbd>.</p>
+        </li>
+        <li class="stop" data-n="7">
+          <h4>Logic</h4>
+          <div class="chips"><code>=IFS(B2&gt;=90,"A",B2&gt;=80,"B",TRUE,"F")</code><code>=IF(AND(B2&gt;1000,C2="Gold"),"Bonus","")</code><code>=SWITCH(A2,"N","North","S","South","?")</code></div>
+        </li>
+        <li class="stop" data-n="8">
+          <h4>Cleanup</h4>
+          <p data-ko='빠른 채우기 Ctrl+E (예시 하나를 입력하면 나머지를 완성) · 텍스트 나누기 · 중복된 값 제거 · Ctrl+G → 선택 옵션 → 빈 셀을 선택한 뒤 =A2 를 입력하고 Ctrl+Enter로 빈칸을 한 번에 채웁니다.'><b>Flash Fill</b> <kbd>Ctrl</kbd>+<kbd>E</kbd> (type one example) · Text to Columns · Remove Duplicates · <kbd>Ctrl</kbd>+<kbd>G</kbd> → Special → Blanks, then <code>=A2</code> and <kbd>Ctrl</kbd>+<kbd>Enter</kbd> to fill every gap at once.</p>
+        </li>
+        <li class="stop" data-n="9">
+          <h4>Printing</h4>
+          <p data-ko='인쇄 영역 설정 · “각 페이지에 반복할 행” = $1:$1 · 모든 열을 한 페이지에 맞추기 · PDF로 내보내기.'>Set a Print Area · “Rows to repeat at top” = <code>$1:$1</code> · Fit all columns on one page · Export to PDF.</p>
+        </li>
+      </ol>
+      <div class="goal g3" data-ko='<b>GOAL</b> — 판매 표: SUMIFS로 담당자 순위표, 슬라이서가 있는 지역 × 월 피벗, 조회로 분류 열 추가.'><b>GOAL</b> — a sales table: a <code>SUMIFS</code> rep leaderboard, a region × month pivot with slicer, and a category column pulled in by lookup.</div>
+    </section>
+
+    <!-- ===== LEVEL 4 ===== -->
+    <section id="l4">
+      <h2>Level 4 — Advanced <span class="badge b4">Modern Excel</span></h2>
+      <p class="lvl-sub" data-ko='최신 파워 도구.'>Modern power tools.</p>
+      <ol class="road r4">
+        <li class="stop" data-n="1">
+          <h4>XLOOKUP</h4>
+          <p data-ko='어느 방향으로든 조회, 기본값이 정확히 일치, 찾지 못할 때 문구 내장, 여러 열을 한 번에 반환:'>Looks any direction, exact match by default, built-in not-found message, and can return multiple columns:</p>
+          <div class="formula"><span class="fx">fx</span> <span>=XLOOKUP(A2, Products[ID], Products[Price], &quot;Not found&quot;)</span><button>copy</button></div>
+        </li>
+        <li class="stop" data-n="2">
+          <h4>Arrays</h4>
+          <p data-ko='수식 하나가 여러 셀을 채웁니다. 전체 스필 범위는 =E2# 로 참조합니다.'>One formula fills many cells. Reference an entire spilled range with <code>=E2#</code>.</p>
+          <div class="chips"><code>=UNIQUE(A2:A500)</code><code>=SORT(A2:C500,3,-1)</code><code>=FILTER(A2:C500,B2:B500&gt;1000,"none")</code><code>=SEQUENCE(10)</code><code>=TEXTSPLIT(A2,", ")</code></div>
+        </li>
+        <li class="stop" data-n="3">
+          <h4>LET+LAMBDA</h4>
+          <p data-ko='읽기 쉬운 수식 작성, 그리고 VBA 없이 나만의 함수를 만들 수 있습니다(이름 관리자에 이름만 등록):'>Readable formulas, plus custom functions with no VBA — just name it in the Name Manager:</p>
+          <div class="formula"><span class="fx">fx</span> <span>=LET(x, A2*B2, tax, x*0.08, x+tax)</span><button>copy</button></div>
+          <div class="formula"><span class="fx">fx</span> <span>=LAMBDA(a,b, SQRT(a^2+b^2))</span><button>copy</button></div>
+        </li>
+        <li class="stop" data-n="4">
+          <h4>PowerQuery <span class="badge b4">Biggest Time-Saver</span></h4>
+          <p data-ko='데이터 → 데이터 가져오기: 기록되고 재실행되는 단계로 가져오기, 정리, 결합. “폴더에서”는 월별 CSV를 자동으로 병합하고, 병합(Merge)은 진짜 조인이며, 피벗 해제는 가로형 데이터를 바로잡습니다. 다음 달에는 “모두 새로 고침” 한 번이면 끝.'>Data → Get Data: import, clean, and combine with recorded, replayable steps. “From Folder” merges monthly CSVs, Merge performs real joins, and Unpivot fixes wide data. Next month: one <b>Refresh All</b>.</p>
+        </li>
+        <li class="stop" data-n="5">
+          <h4>PowerPivot</h4>
+          <p data-ko='수백만 행, 관계로 연결된 여러 테이블, 그리고 측정값(measure):'>Millions of rows, multiple related tables, and measures:</p>
+          <div class="formula"><span class="fx">fx</span> <span>Sales LY := CALCULATE([Total Sales], SAMEPERIODLASTYEAR(Calendar[Date]))</span><button>copy</button></div>
+        </li>
+        <li class="stop" data-n="6">
+          <h4>Classics</h4>
+          <div class="chips"><code>=SUMPRODUCT((A2:A100="West")*(B2:B100&gt;1000)*C2:C100)</code><code>=OFFSET(A1,2,0,5,1)</code><code>=INDIRECT("'"&amp;A2&amp;"'!B5")</code></div>
+          <p style="margin-top:6px" data-ko='OFFSET과 INDIRECT는 휘발성 함수입니다 — 큰 시트에서는 INDEX와 표를 먼저 사용하세요.'>OFFSET and INDIRECT are volatile — prefer INDEX and Tables on large sheets.</p>
+        </li>
+      </ol>
+      <div class="goal g4" data-ko='<b>GOAL</b> — Power Query로 CSV 2개를 결합·정리해 표로 로드하고, 실시간 FILTER 보고서 만들기.'><b>GOAL</b> — combine two CSVs with Power Query, clean them, load as a Table, and build a live <code>FILTER</code> report.</div>
+    </section>
+
+    <!-- ===== LEVEL 5 ===== -->
+    <section id="l5">
+      <h2>Level 5 — Expert <span class="badge b5">Automation</span></h2>
+      <p class="lvl-sub" data-ko='전부 자동화.'>Automate everything.</p>
+      <ol class="road r5">
+        <li class="stop" data-n="1">
+          <h4>Macros</h4>
+          <p data-ko='개발 도구 탭을 먼저 켭니다(파일 → 옵션 → 리본 사용자 지정). 개발 도구 → 매크로 기록 → 작업 수행 → 기록 중지. 반드시 .xlsm 형식으로 저장하세요.'>Enable the <b>Developer</b> tab (File → Options → Customize Ribbon). Developer → Record Macro → do the steps → Stop. Always save as <code>.xlsm</code>.</p>
+        </li>
+        <li class="stop" data-n="2">
+          <h4>VBA</h4>
+          <p data-ko='Alt+F11로 편집기를 엽니다. F8로 한 줄씩 실행, F9로 중단점. 핵심 개체는 Range, Cells, Worksheets, ThisWorkbook입니다.'><kbd>Alt</kbd>+<kbd>F11</kbd> opens the editor. <kbd>F8</kbd> steps line by line, <kbd>F9</kbd> toggles breakpoints. Core objects: <code>Range</code> <code>Cells</code> <code>Worksheets</code> <code>ThisWorkbook</code>.</p>
+          <div class="formula"><span class="fx">fx</span> <span>Rows(1).Font.Bold = True : Columns(&quot;C&quot;).AutoFit</span><button>copy</button></div>
+        </li>
+        <li class="stop" data-n="3">
+          <h4>What-If</h4>
+          <p data-ko='Goal Seek = 목표값에 맞게 수식 역산 · Data Tables = 민감도 표 · Scenario Manager = 저장된 입력 묶음 · Solver = 제약 조건이 있는 최적화.'><b>Goal Seek</b> = work a formula backward to a target · <b>Data Tables</b> = sensitivity grids · <b>Scenario Manager</b> = saved bundles of inputs · <b>Solver</b> = optimization with constraints.</p>
+        </li>
+        <li class="stop" data-n="4">
+          <h4>Dashboards</h4>
+          <p data-ko='3개 계층으로 구성합니다: 데이터(Power Query 기반 표) → 계산(숨겨진 피벗/배열) → 화면(KPI 카드, 피벗 차트, 보고서 연결로 모든 피벗을 제어하는 슬라이서). 눈금선은 끄고 시트를 보호합니다.'>Three layers: <b>Data</b> (a Power Query-fed Table) → <b>Calc</b> (hidden pivots and arrays) → <b>View</b> (KPI cards, PivotCharts, slicers wired to every pivot via Report Connections). Hide gridlines and protect the sheet.</p>
+        </li>
+        <li class="stop" data-n="5">
+          <h4>Habits</h4>
+          <p data-ko='입력/계산/출력을 분리(탭 색 구분) · 참조 추적 화살표로 수식 감사 · 수식 셀 보호 · OneDrive 버전 기록과 공동 작성 · 큰 파일은 .xlsb · 무거울 땐 수동 계산 모드(F9로 새로 고침).'>Separate inputs / calculations / outputs (color the tabs) · audit with Trace Precedents arrows · protect formula cells · OneDrive version history + co-authoring · use <code>.xlsb</code> for huge files · switch to manual calc (refresh with <kbd>F9</kbd>) when heavy.</p>
+        </li>
+      </ol>
+      <div class="goal g5" data-ko='<b>GOAL</b> — 원클릭 월별 보고서: 폴더에 CSV 넣기 → 모두 새로 고침 → 대시보드 갱신 → 서식 매크로 재생.'><b>GOAL</b> — a one-click monthly report: drop CSVs in a folder → Refresh All → dashboard updates → formatting macro replays.</div>
+    </section>
+
+    <!-- ===== CHEAT SHEET ===== -->
+    <section id="cheatsheet">
+      <h2>Cheat Sheets <span class="badge b1">Keep Open</span></h2>
+      <div class="two-col">
+        <div class="mini-card">
+          <h4>Top shortcuts</h4>
+          <div class="tbl-wrap"><table>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>T</kbd></td><td data-ko='표 만들기'>Make Table</td></tr>
+            <tr><td><kbd>Alt</kbd>+<kbd>=</kbd></td><td data-ko='자동 합계'>AutoSum</td></tr>
+            <tr><td><kbd>F4</kbd></td><td data-ko='$ 토글 / 마지막 작업 반복'>Toggle $ / repeat action</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd></td><td data-ko='필터 켜기/끄기'>Filters on/off</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>E</kbd></td><td data-ko='빠른 채우기'>Flash Fill</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>Enter</kbd></td><td data-ko='선택한 모든 셀 채우기'>Fill all selected cells</td></tr>
+            <tr><td><kbd>Alt</kbd>+<kbd>F1</kbd></td><td data-ko='즉시 차트 만들기'>Instant chart</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>1</kbd></td><td data-ko='셀 서식'>Format cells</td></tr>
+            <tr><td><kbd>F2</kbd></td><td data-ko='셀 편집'>Edit cell</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>;</kbd></td><td data-ko='오늘 날짜 입력'>Insert today's date</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>`</kbd></td><td data-ko='수식 보기 전환'>Show formulas</td></tr>
+            <tr><td><kbd>Alt</kbd>+<kbd>F5</kbd> / <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>F5</kbd></td><td data-ko='피벗 새로 고침 / 전체 새로 고침'>Refresh pivot / everything</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd></td><td data-ko='값으로 붙여넣기'>Paste values</td></tr>
+            <tr><td><kbd>Alt</kbd>+<kbd>Enter</kbd></td><td data-ko='셀 안 줄바꿈'>Line break in cell</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>D</kbd>/<kbd>R</kbd></td><td data-ko='아래로 / 오른쪽으로 채우기'>Fill down / right</td></tr>
+          </table></div>
+        </div>
+        <div class="mini-card">
+          <h4>Error decoder</h4>
+          <div class="tbl-wrap"><table>
+            <tr><td><code>#N/A</code></td><td data-ko='조회 실패 → 공백은 TRIM, 정확히 일치 여부 확인'>Lookup failed → TRIM spaces, check exact match</td></tr>
+            <tr><td><code>#REF!</code></td><td data-ko='행/시트가 삭제됨 → 빠르게 Ctrl+Z'>Deleted row/sheet → press Ctrl+Z fast</td></tr>
+            <tr><td><code>#DIV/0!</code></td><td data-ko='IFERROR(x/y,0) 로 감싸기'>Wrap it: IFERROR(x/y,0)</td></tr>
+            <tr><td><code>#VALUE!</code></td><td data-ko='계산 안에 텍스트가 섞임 → 원인 찾기'>Text inside math → find the stray</td></tr>
+            <tr><td><code>#NAME?</code></td><td data-ko='오타이거나 따옴표/이름이 누락됨'>Typo, or missing quotes / name</td></tr>
+            <tr><td><code>#SPILL!</code></td><td data-ko='배열이 쓸 범위가 막힘 → 해당 셀 비우기'>Something blocks the array → clear those cells</td></tr>
+            <tr><td><code>#####</code></td><td data-ko='오류가 아닙니다 — 열을 넓히세요'>Not an error — widen the column</td></tr>
+          </table></div>
+          <h4 style="margin-top:14px">Function families</h4>
+          <div class="tbl-wrap"><table>
+            <tr><td>Aggregate</td><td><code>SUM AVERAGE COUNT MAX MIN SUBTOTAL AGGREGATE</code></td></tr>
+            <tr><td>Conditional</td><td><code>IF IFS SUMIF(S) COUNTIF(S) AVERAGEIF(S) SWITCH</code></td></tr>
+            <tr><td>Lookup</td><td><code>XLOOKUP VLOOKUP INDEX+MATCH XMATCH</code></td></tr>
+            <tr><td>Text</td><td><code>LEFT RIGHT MID LEN TRIM TEXTJOIN TEXTSPLIT SUBSTITUTE TEXT</code></td></tr>
+            <tr><td>Date</td><td><code>TODAY DATEDIF EDATE EOMONTH NETWORKDAYS TEXT</code></td></tr>
+            <tr><td>Dynamic</td><td><code>FILTER SORT UNIQUE SEQUENCE LET LAMBDA</code></td></tr>
+          </table></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CAPSTONE ===== -->
+    <section id="capstone">
+      <h2>Capstone Challenges <span class="badge b5">Prove It</span></h2>
+      <div class="mini-card"><h4>1 — Budget tracker (L1–2)</h4><p data-ko='항목 × 월 표, 합계, 수입 대비 % 열($ 사용), 데이터 막대, 초과 지출 경고, 차트 하나.'>Categories × months, totals, a % of income column with <code>$</code>, data bars, overspend alerts, one chart.</p></div>
+      <div class="mini-card"><h4>2 — Sales analysis (L3)</h4><p data-ko='200행 데이터 → 표로 변환 → SUMIFS 순위표 → 슬라이서와 전체 대비 %가 있는 지역 × 월 피벗 + 조회로 분류 열 추가.'>200 rows → Table → SUMIFS leaderboard → region × month pivot with % of total and a slicer → category column via lookup.</p></div>
+      <div class="mini-card"><h4>3 — Automated report (L4–5)</h4><p data-ko='CSV 폴더 → Power Query → 슬라이서가 있는 대시보드 → 서식 매크로 → 새로 고침 한 번으로 끝.'>Folder of CSVs → Power Query → dashboard with slicers → formatting macro → everything refreshes in one click.</p></div>
+    </section>
+
+    <!-- ===== PROGRESS ===== -->
+    <section id="progress">
+      <h2>Track Your Progress <span class="badge b1">Saved Locally</span></h2>
+      <div id="pbar"><div class="track"><div class="fill"></div></div><small>0 of 0 complete</small></div>
+      <div id="checklist"></div>
+    </section>
+
+    <footer data-ko='Excel Roadmap · 단독 실행 .html · 오프라인 동작 · 진행 상황은 이 브라우저에 저장됩니다'>Excel Roadmap · one standalone .html · works offline · progress is stored in this browser</footer>
+  </main>
+</div>
+
+<button id="toTop" title="Back to top">↑</button>
+
+<script>
+let LANG='en';
+const transEls=[...document.querySelectorAll('[data-ko]')];
+transEls.forEach(e=>{ e.dataset.en=e.innerHTML; });
+
+const checklistItems=[
+  {e:'L1 · Build the 5-product sheet with dragged formulas + AutoSum', k:'L1 · 드래그 수식과 AutoSum으로 제품 5개 시트 만들기'},
+  {e:'L1 · Navigate with Ctrl+arrows; format a header row (Ctrl+1)', k:'L1 · Ctrl+방향키로 이동하고 머리글 행 서식 지정(Ctrl+1)'},
+  {e:'L2 · Use $ references correctly (F4) in a dragged formula', k:'L2 · 드래그 수식에서 $ 참조를 정확히 사용(F4)'},
+  {e:'L2 · Write IF + SUMIFS + COUNTIFS on real data', k:'L2 · 실제 데이터로 IF + SUMIFS + COUNTIFS 작성'},
+  {e:'L2 · Add filters, freeze panes, conditional formatting, one chart', k:'L2 · 필터, 틀 고정, 조건부 서식, 차트 1개 추가'},
+  {e:'L3 · Write a VLOOKUP and an INDEX+MATCH with IFERROR', k:'L3 · IFERROR를 적용한 VLOOKUP과 INDEX+MATCH 작성'},
+  {e:'L3 · Convert data to a Table (Ctrl+T), use structured refs', k:'L3 · 데이터를 표(Ctrl+T)로 변환하고 구조적 참조 사용'},
+  {e:'L3 · Build a PivotTable with slicer and % of total', k:'L3 · 슬라이서와 전체 대비 %가 있는 피벗테이블 만들기'},
+  {e:'L3 · Clean data with Flash Fill / Text to Columns', k:'L3 · 빠른 채우기 / 텍스트 나누기로 데이터 정리'},
+  {e:'L4 · Write XLOOKUP + FILTER/SORT/UNIQUE spill formulas', k:'L4 · XLOOKUP과 FILTER/SORT/UNIQUE 스필 수식 작성'},
+  {e:'L4 · Import & clean data with Power Query, then Refresh', k:'L4 · Power Query로 데이터를 가져와 정리한 뒤 새로 고침'},
+  {e:'L5 · Record a macro and edit its VBA (Alt+F11)', k:'L5 · 매크로를 기록하고 VBA 편집(Alt+F11)'},
+  {e:'L5 · Build a 3-layer dashboard (data → calc → view)', k:'L5 · 3계층 대시보드 구축(데이터 → 계산 → 화면)'},
+  {e:'Capstone · Finish one challenge end-to-end', k:'Capstone · 도전 과제 하나를 처음부터 끝까지 완료'},
+];
+const KEY='excelRoadmapV2';
+let state={}; try{state=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){}
+
+function renderChecklist(){
+  const box=document.getElementById('checklist');
+  box.innerHTML='';
+  checklistItems.forEach((it,i)=>{
+    const d=document.createElement('label');
+    d.className='progress-item'+(state[i]?' done':'');
+    d.innerHTML='<input type="checkbox" '+(state[i]?'checked':'')+'> <span>'+(LANG==='ko'?it.k:it.e)+'</span>';
+    d.querySelector('input').addEventListener('change',e=>{
+      if(e.target.checked) state[i]=1; else delete state[i];
+      d.classList.toggle('done',e.target.checked);
+      try{localStorage.setItem(KEY,JSON.stringify(state))}catch(err){}
+      renderBar();
+    });
+    box.appendChild(d);
+  });
+  renderBar();
+}
+function renderBar(){
+  const done=Object.keys(state).length;
+  document.querySelector('#pbar .fill').style.width=(done/checklistItems.length*100)+'%';
+  document.querySelector('#pbar small').textContent = LANG==='ko'
+    ? checklistItems.length+'개 중 '+done+'개 완료'
+    : done+' of '+checklistItems.length+' complete';
+}
+
+function setTheme(t){
+  document.documentElement.dataset.theme=t;
+  document.getElementById('btnDark').classList.toggle('on', t==='dark');
+  document.getElementById('btnLight').classList.toggle('on', t==='light');
+  try{localStorage.setItem('excelRoadmapTheme',t)}catch(e){}
+}
+
+function setLang(l){
+  LANG=l;
+  document.documentElement.lang=l;
+  transEls.forEach(e=>{ e.innerHTML = l==='ko' ? e.dataset.ko : e.dataset.en; });
+  document.getElementById('btnEn').classList.toggle('on', l==='en');
+  document.getElementById('btnKo').classList.toggle('on', l==='ko');
+  try{localStorage.setItem('excelRoadmapLang',l)}catch(e){}
+  renderChecklist();
+}
+
+(function(){
+  // Nav select + scroll-spy
+  const sections=[...document.querySelectorAll('main section[id]')];
+  const links=[...document.querySelectorAll('nav a[href^="#"]')];
+  const sel=document.getElementById('navSelect');
+  sections.forEach(s=>{
+    const h=s.querySelector('h1,h2');
+    if(h){const o=document.createElement('option');o.value=s.id;o.textContent=h.textContent.trim().slice(0,32);sel.appendChild(o);}
+  });
+  const spy=new IntersectionObserver(es=>{
+    es.forEach(e=>{ if(e.isIntersecting){
+      links.forEach(l=>l.classList.toggle('active', l.getAttribute('href')==='#'+e.target.id));
+      sel.value=e.target.id;
+    }});
+  },{rootMargin:'-12% 0px -70% 0px'});
+  sections.forEach(s=>spy.observe(s));
+
+  // Back to top
+  const toTop=document.getElementById('toTop');
+  addEventListener('scroll',()=>toTop.classList.toggle('show',scrollY>500));
+  toTop.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));
+
+  // Copy: formula buttons + chips
+  function copyText(t,el,orig){
+    navigator.clipboard.writeText(t).then(()=>{
+      el.classList.add('copied'); const old=el.textContent;
+      el.textContent='copied'; setTimeout(()=>{el.textContent=orig||old;el.classList.remove('copied')},1000);
+    });
+  }
+  document.querySelectorAll('.formula button').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const txt=[...b.parentElement.children].filter(c=>!c.classList.contains('fx')&&c.tagName!=='BUTTON')
+        .map(c=>c.textContent).join('').replace(/'.*$/,'').trim();
+      copyText(txt,b,'copy');
+    });
+  });
+  document.querySelectorAll('.chips code').forEach(c=>{
+    c.title='click to copy';
+    c.addEventListener('click',()=>copyText(c.textContent,c));
+  });
+
+  // Restore theme (default dark) & language (default English) + render checklist
+  let savedTheme='dark';
+  try{savedTheme=localStorage.getItem('excelRoadmapTheme')||'dark'}catch(e){}
+  setTheme(savedTheme==='light'?'light':'dark');
+  let saved='en';
+  try{saved=localStorage.getItem('excelRoadmapLang')||'en'}catch(e){}
+  setLang(saved==='ko'?'ko':'en');
+})();
+</script>
+</body>
+</html>
