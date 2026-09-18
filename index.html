@@ -1,11 +1,11 @@
 
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
-<head>
+<head><meta name="x-codeium-csrf-token" content="92b26754-9143-4d98-9be8-11f61cd45b49"><script src="/cascade-browser-integration.js" nonce="dc9d4487c1a247aaa044d9793ceb9d50"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#191521">
-<title>Excel snatcher</title>
+<title>Excel Snatcher</title>
 <style>
   :root{ /* dark lavender = default */
     --bg:#191521; --panel:#241d2e; --panel2:#1c1726; --ink:#efecf6; --muted:#a79eb8;
@@ -85,7 +85,10 @@
   .formula button{margin-left:auto;flex-shrink:0;background:var(--panel);border:1px solid var(--border-dark);color:var(--muted);border-radius:5px;padding:2px 10px;font-size:11px;cursor:pointer;letter-spacing:.5px}
   .formula button:hover{color:var(--ink);border-color:var(--ink)}
   /* Tables */
-  .tbl-wrap{overflow-x:auto;margin:8px 0 14px;border:1px solid var(--border);border-radius:6px}
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;margin:8px 0 14px;border:1px solid var(--border);border-radius:6px}
+  .tbl-wrap table{width:max-content;min-width:100%}
+  .tbl-wrap::-webkit-scrollbar{height:6px}
+  .tbl-wrap::-webkit-scrollbar-thumb{background:var(--border-dark);border-radius:4px}
   table{border-collapse:collapse;width:100%;font-size:13px}
   th{background:var(--panel2);color:var(--ink);text-align:left;padding:7px 12px;font-size:11.5px;letter-spacing:.8px;text-transform:uppercase;font-weight:600}
   td{padding:6px 12px;border-top:1px solid var(--border);color:var(--p);vertical-align:top}
@@ -182,7 +185,7 @@
   <main>
     <!-- ===== OVERVIEW ===== -->
     <section id="overview">
-      <h1>excel learning snatcher</h1>
+      <h1>Excel Snatcher</h1>
       <p style="color:var(--muted);margin-top:8px" data-ko='길을 따라 한 단계씩.'>Follow the roads.</p>
       <div class="map">
         <a class="node n1" href="#l1"><b>1 · Beginner</b><small>Grid, formulas, format</small></a>
@@ -461,7 +464,7 @@
       <div id="checklist"></div>
     </section>
 
-    <footer data-ko='Excel Roadmap · 단독 실행 .html · 오프라인 동작 · 진행 상황은 이 브라우저에 저장됩니다'>Excel Roadmap · one standalone .html · works offline · progress is stored in this browser</footer>
+    <footer data-ko='Excel Snatcher · 단독 실행 .html · 오프라인 동작 · 진행 상황은 이 브라우저에 저장됩니다'>Excel Snatcher · one standalone .html · works offline · progress is stored in this browser</footer>
   </main>
 </div>
 
